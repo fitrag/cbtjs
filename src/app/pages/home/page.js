@@ -4,7 +4,7 @@ const Home = () => {
     return (
         <>
         <Header/>
-            <div className="flex flex-col m-4 mb-[90px]">
+            <div className="flex flex-col my-4 mx-5 mb-[90px]">
                 <div className="flex shadow space-x-4 items-center bg-white rounded-lg p-5 my-2">
                     <div className="w-[100px]">
                         <div className="bg-blue-200 p-3 rounded-lg h-[100px] flex items-center justify-center font-bold text-lg text-white text-3xl">RPL</div>

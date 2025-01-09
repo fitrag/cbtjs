@@ -5,17 +5,11 @@ import { useEffect, useState } from "react"
 const Header = () => {
 
     const [user, setUser] = useState([])
-    const dataUser = async () => {
-        const token = localStorage['token']
+    const dataUser = async (token) => {
         if(!token){
           console.log("token tidak ada")
         }else{
           const getUser = await fetch("http://127.0.0.1:8000/api/user",
-            {cache:'force-cache',
-                next:{
-                    revalidate:60
-                }
-            },
           {
             headers:{
               Authorization:`Bearer ${token}`
@@ -27,7 +21,8 @@ const Header = () => {
       }
 
       useEffect(()=>{
-        dataUser()
+        const token = localStorage['token']
+        dataUser(token)
       },[])
     return (
         <>
