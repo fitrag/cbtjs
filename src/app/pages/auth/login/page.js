@@ -33,7 +33,7 @@ const Login = () => {
             toast.success("Berhasil login", {
                 id:toastLoading
             })
-            redirect('/pages/home')
+            router.push('/pages/home')
         }else{
             toast.error(res.message, {
                 id:toastLoading
