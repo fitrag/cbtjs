@@ -18,9 +18,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${interFont.className} antialiased`}
+        className={`${interFont.className} antialiased mb-[90px]`}
       >
-        <div className="h-full bg-gray-100 m-auto min-w-[160px] max-w-[560px]">
+        <div className="h-full bg-gray-100 m-auto min-w-[160px] max-w-[540px]">
           <Toaster/>
           {children}
         </div>

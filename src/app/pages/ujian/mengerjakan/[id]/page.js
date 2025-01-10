@@ -15,10 +15,7 @@ const UjianPage = () => {
   // Fungsi untuk mengambil soal
   const getSoal = useCallback(async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/soals", {
-        cache: 'no-store',
-        next: { revalidate: 10 },
-      })
+      const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=1`)
       const res = await response.json()
 
       if (res) {
