@@ -20,10 +20,11 @@ const UjianPage = () => {
 
       if (res) {
         const { data, current_page, next_page_url, prev_page_url, total } = res.data
-        localStorage.setItem("soal_id", data[0].id)
-        fetchJawaban(data[0].id)
+        localStorage.setItem("soal_id", data[0].soal.id)
+        localStorage.setItem("current_page", current_page)
+        fetchJawaban(data[0].soal.id)
         setDatas({
-          dataSoal: data,
+          dataSoal: data[0].soal,
           current_page,
           next_link: next_page_url,
           prev_link: prev_page_url,
@@ -70,18 +71,17 @@ const UjianPage = () => {
     })
     const newPage = data.action === 'next' ? data.current_page + 1 : data.current_page - 1
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/soals?page=${newPage}`, {cache:'force-cache', next:{
-        revalidate:10
-      }})
+      const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=${localStorage.getItem("ujian_id")}&page=${newPage}`)
       const res = await response.json()
 
       if (res) {
         const { data, current_page, next_page_url, prev_page_url, total } = res.data
-        localStorage.setItem("soal_id", data[0].id)
-        fetchJawaban(data[0].id)
+        localStorage.setItem("soal_id", data[0].soal.id)
+        localStorage.setItem("current_page", current_page)
 
+        fetchJawaban(data[0].soal.id)
         setDatas({
-          dataSoal: data,
+          dataSoal: data[0].soal,
           current_page,
           next_link: next_page_url,
           prev_link: prev_page_url,
@@ -96,22 +96,38 @@ const UjianPage = () => {
     }
   }
 
+  const handleKeyDown = (e) => {
+    console.log(e)
+    if(e.key == "ArrowRight"){
+      updateSoal({
+        action: 'next',
+        current_page: parseInt(localStorage.getItem('current_page')),
+      })
+    }
+    else if(e.key == "ArrowLeft"){
+      updateSoal({
+        action: 'prev',
+        current_page: parseInt(localStorage.getItem('current_page')),
+      })
+    }
+  }
   // Memanggil API untuk soal pertama dan jawaban saat komponen pertama kali dimuat
   useEffect(() => {
     let kesempatan = 2
     const handleCurang = () => {
         kesempatan--
-        if(kesempatan == 1){
-            toast('1x lagi melakukan kecurangan, ujian otomatis selesai', {
-                icon: '🧐',
-            });
-          }else if(kesempatan <= 0){
-            toast.success('Anda melakukan kecurangan, Ujian telah selesai, Terimakasih');
-            redirect("/pages/auth/login")
-        }
+        // if(kesempatan == 1){
+        //     toast('1x lagi melakukan kecurangan, ujian otomatis selesai', {
+        //         icon: '🧐',
+        //     });
+        //   }else if(kesempatan <= 0){
+        //     toast.success('Anda melakukan kecurangan, Ujian telah selesai, Terimakasih');
+        //     redirect("/pages/auth/login")
+        // }
     }
 
     window.addEventListener('blur', handleCurang)
+    window.addEventListener('keydown', handleKeyDown)
 
     const soalId = localStorage.getItem("soal_id")
     if (soalId) {
@@ -119,6 +135,9 @@ const UjianPage = () => {
     }
 
     getSoal()
+
+    console.log(terjawab)
+
 
     return () => {
       window.removeEventListener('blur', handleCurang);

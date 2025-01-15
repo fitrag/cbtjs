@@ -30,6 +30,7 @@ const Login = () => {
         const res = await get.json();
         if(res && res.statusCode == 200){
             localStorage.setItem("token", res.token)
+            localStorage.setItem("user_id", res.user_id)
             toast.success("Berhasil login", {
                 id:toastLoading
             })

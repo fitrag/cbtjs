@@ -3,13 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import LoadingUjian from "./LoadingUjian";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 
 const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
-
-  const router = useRouter();
-
-  const totalTime = parseInt(localStorage.getItem("waktu_ujian"));
+  const totalTime = 3600;
   const [timeLeft, setTimeLeft] = useState(totalTime);
   const [progress, setProgress] = useState(100);
 
@@ -73,15 +69,7 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
   // Mengelola timer dan progress
   useEffect(() => {
     
-    if (localStorage.getItem("waktu_ujian") == 'NaN' || timeLeft <= 0){
-      toast.success('Waktu habis ujian telah selesai, Terimakasih telah mengerjakan');
-      router.push("/pages/home")
-      localStorage.removeItem("ujian_id")
-      localStorage.removeItem("current_page")
-      localStorage.removeItem("total_waktu")
-      localStorage.removeItem("waktu_ujian")
-      localStorage.removeItem("soal_id")
-    };
+    if (timeLeft <= 0) return;
 
     const interval = setInterval(() => {
       setTimeLeft((prevTime) => {
@@ -89,13 +77,12 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
           clearInterval(interval);
           return 0;
         }
-        localStorage.setItem("waktu_ujian", timeLeft)
         return prevTime - 1;
       });
     }, 1000);
 
     // Update progress setiap detik
-    const progressPercentage = (timeLeft / localStorage.getItem("total_waktu")) * 100;
+    const progressPercentage = (timeLeft / totalTime) * 100;
     setProgress(progressPercentage);
 
     return () => clearInterval(interval);
@@ -158,20 +145,21 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
         </div>
 
         { loading ? <LoadingUjian/> :
-          <div className="bg-white shadow-md rounded-[25px]" key={soals.dataSoal.id}>
-            <div className="px-4 py-5 font-light" dangerouslySetInnerHTML={{ __html: soals.dataSoal.soal }} />
+        soals.dataSoal?.map((soal, index) => (
+          <div className="bg-white shadow-md rounded-[25px]" key={soal.id}>
+            <div className="px-4 py-5 font-light" dangerouslySetInnerHTML={{ __html: soal.soal }} />
             <div className="px-4 pb-4">
               {['A', 'B', 'C', 'D'].map((opsi) => (
                 <div
                   key={opsi}
-                  onClick={() => pilihJawaban(soals.dataSoal.id, opsi, parseInt(localStorage.getItem('user_id')))}
+                  onClick={() => pilihJawaban(soal.id, opsi, parseInt(localStorage.getItem('user_id')))}
                   className={terjawab.jawaban === opsi ? 'rounded-full cursor-pointer p-5 hover:border-green-500 border-green-600 bg-green-500 text-white font-semibold border-[2px] my-2' : 'rounded-full cursor-pointer p-5 hover:border-green-500 border-[1px] my-2'}>
-                  {opsi}. {soals.dataSoal[`opsi_${opsi.toLowerCase()}`]}
+                  {soal[`opsi_${opsi.toLowerCase()}`]}
                 </div>
               ))}
             </div>
           </div>
-        }
+        ))}
 
         <div className="mt-7 flex">
           {soals.prev_link && (

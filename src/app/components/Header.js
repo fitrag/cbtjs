@@ -28,7 +28,7 @@ const Header = () => {
       },[])
     return (
         <>
-        <div className="flex bg-white p-5 items-center justify-between space-x-3">
+        <div className="flex bg-white p-5 items-center justify-between space-x-3 shadow-sm">
             <div className="">
                 <div className="inline-block w-[50px] h-[50px] bg-green-500 rounded-full"></div>
             </div>

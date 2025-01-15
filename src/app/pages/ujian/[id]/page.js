@@ -24,7 +24,8 @@ const Detail = () => {
 
     const handleToken = async (e) => {
         e.preventDefault()
-        const get = await fetch(`http://127.0.0.1:8000/api/ujian/${id}/token`)
+        const get = await fetch(`http://127.0.0.1:8000/api/ujian/${id}/token/${token}/${localStorage.getItem("user_id")}`, {
+        })
         const res = await get.json()
         
         if(!token){
@@ -35,7 +36,12 @@ const Detail = () => {
                 toast.success("Token benar! Selamat mengerjakan",{
                     id:toastLoading
                 })
-
+                localStorage.setItem("ujian_id", res.ujian_id)
+                
+                if((localStorage.getItem("waktu_ujian")) == "NaN" || !localStorage.getItem("waktu_ujian")){
+                    localStorage.setItem("waktu_ujian", res.waktu_ujian);
+                    localStorage.setItem("total_waktu", res.waktu_ujian);
+                }
                 router.push(`/pages/ujian/mengerjakan/${id}`)
             }else{
                 toast.error("Token salah!",{
