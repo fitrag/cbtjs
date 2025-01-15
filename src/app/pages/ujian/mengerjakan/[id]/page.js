@@ -15,7 +15,7 @@ const UjianPage = () => {
   // Fungsi untuk mengambil soal
   const getSoal = useCallback(async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=1`)
+      const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=${localStorage.getItem("ujian_id")}&user_id=${localStorage.getItem("user_id")}`)
       const res = await response.json()
 
       if (res) {
@@ -40,7 +40,7 @@ const UjianPage = () => {
   // Fungsi untuk mengambil jawaban
   const fetchJawaban = useCallback(async (soalId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/jawaban/${soalId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/jawaban/${soalId}/${localStorage.getItem("user_id")}`, {
         headers: { 'Content-Type': 'application/json' }
       })
       const res = await response.json()
@@ -71,7 +71,7 @@ const UjianPage = () => {
     })
     const newPage = data.action === 'next' ? data.current_page + 1 : data.current_page - 1
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=${localStorage.getItem("ujian_id")}&page=${newPage}`)
+      const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=${localStorage.getItem("ujian_id")}&user_id=${localStorage.getItem("user_id")}&page=${newPage}`)
       const res = await response.json()
 
       if (res) {

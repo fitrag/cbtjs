@@ -24,13 +24,14 @@ const Detail = () => {
 
     const handleToken = async (e) => {
         e.preventDefault()
-        const get = await fetch(`http://127.0.0.1:8000/api/ujian/${id}/token/${token}/${localStorage.getItem("user_id")}`, {
-        })
-        const res = await get.json()
+        
         
         if(!token){
             toast.error("Masukkan token")
         }else{
+            const get = await fetch(`http://127.0.0.1:8000/api/ujian/${id}/token/${token}/${localStorage.getItem("user_id")}`, {
+            })
+            const res = await get.json()
             const toastLoading = toast.loading("Memeriksa token...")
             if(token == res.token){
                 toast.success("Token benar! Selamat mengerjakan",{

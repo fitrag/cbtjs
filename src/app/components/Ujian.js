@@ -44,7 +44,7 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
             })
         });
 
-        const getJawaban = await fetch(`http://127.0.0.1:8000/api/jawaban/${localStorage.getItem("soal_id")}`, {
+        const getJawaban = await fetch(`http://127.0.0.1:8000/api/jawaban/${localStorage.getItem("soal_id")}/${localStorage.getItem("user_id")}`, {
             headers: {
             'Content-Type': 'application/json'
             }
