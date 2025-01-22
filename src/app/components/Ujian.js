@@ -44,6 +44,15 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
             })
         });
 
+        const resInsert = await insert.json();
+        if(resInsert){
+          if(resInsert.data.status == 'Benar'){
+            localStorage['skor'] = parseInt(localStorage['skor'])+resInsert.data.skor
+          }else{
+            localStorage['skor'] = parseInt(localStorage['skor']) <= 0 ? 0 : parseInt(localStorage['skor'])-resInsert.data.skor
+          }
+        }
+
         const getJawaban = await fetch(`http://127.0.0.1:8000/api/jawaban/${localStorage.getItem("soal_id")}/${localStorage.getItem("user_id")}`, {
             headers: {
             'Content-Type': 'application/json'
@@ -164,7 +173,7 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
               {['A', 'B', 'C', 'D'].map((opsi) => (
                 <div
                   key={opsi}
-                  onClick={() => pilihJawaban(soals.dataSoal.id, opsi, parseInt(localStorage.getItem('user_id')))}
+                  onClick={() => terjawab.jawaban != opsi ? pilihJawaban(soals.dataSoal.id, opsi, parseInt(localStorage.getItem('user_id'))) : ''}
                   className={terjawab.jawaban === opsi ? 'rounded-full cursor-pointer p-5 hover:border-green-500 border-green-600 bg-green-500 text-white font-semibold border-[2px] my-2' : 'rounded-full cursor-pointer p-5 hover:border-green-500 border-[1px] my-2'}>
                   {opsi}. {soals.dataSoal[`opsi_${opsi.toLowerCase()}`]}
                 </div>

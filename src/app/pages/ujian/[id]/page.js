@@ -38,6 +38,7 @@ const Detail = () => {
                     id:toastLoading
                 })
                 localStorage.setItem("ujian_id", res.ujian_id)
+                localStorage.setItem("skor", 0)
                 
                 if((localStorage.getItem("waktu_ujian")) == "NaN" || !localStorage.getItem("waktu_ujian")){
                     localStorage.setItem("waktu_ujian", res.waktu_ujian);

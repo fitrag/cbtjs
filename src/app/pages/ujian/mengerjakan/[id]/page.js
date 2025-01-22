@@ -97,7 +97,6 @@ const UjianPage = () => {
   }
 
   const handleKeyDown = (e) => {
-    console.log(e)
     if(e.key == "ArrowRight"){
       updateSoal({
         action: 'next',
