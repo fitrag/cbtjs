@@ -5,6 +5,10 @@ import { redirect, useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 
+const CACHE_NAME = 'ujian-soal-cache'
+const CACHE_KEY = 'ujian-soal-data'
+const CACHE_EXPIRATION_TIME = 2 * 60 * 1000 // 2 menit dalam milidetik
+
 const UjianPage = () => {
   const [datas, setDatas] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,6 +19,28 @@ const UjianPage = () => {
   // Fungsi untuk mengambil soal
   const getSoal = useCallback(async () => {
     try {
+      // Cek apakah data ada di cache dan apakah cache sudah kedaluwarsa
+      if ('caches' in window) {
+        const cacheResponse = await caches.match(CACHE_KEY)
+
+        if (cacheResponse) {
+          const cacheData = await cacheResponse.json()
+          const currentTime = Date.now()
+          const cacheAge = currentTime - cacheData.timestamp
+
+          // Jika cache masih valid
+          if (cacheAge < CACHE_EXPIRATION_TIME) {
+            setDatas(cacheData.data) // Ambil data dari cache
+            setLoading(false)
+            return
+          } else {
+            // Hapus cache yang sudah kedaluwarsa
+            await caches.delete(CACHE_KEY)
+          }
+        }
+      }
+
+      // Jika tidak ada cache atau cache sudah kedaluwarsa, ambil data baru dari API
       const response = await fetch(`http://127.0.0.1:8000/api/soals?ujian_id=${localStorage.getItem("ujian_id")}&user_id=${localStorage.getItem("user_id")}`)
       const res = await response.json()
 
@@ -23,6 +49,24 @@ const UjianPage = () => {
         localStorage.setItem("soal_id", data[0].soal.id)
         localStorage.setItem("current_page", current_page)
         fetchJawaban(data[0].soal.id)
+
+        const cacheData = {
+          data: {
+            dataSoal: data[0].soal,
+            current_page,
+            next_link: next_page_url,
+            prev_link: prev_page_url,
+            total,
+          },
+          timestamp: Date.now(), // Simpan timestamp untuk cache expiration
+        }
+
+        // Simpan data ke cache
+        if ('caches' in window) {
+          const cache = await caches.open(CACHE_NAME)
+          await cache.put(CACHE_KEY, new Response(JSON.stringify(cacheData)))
+        }
+
         setDatas({
           dataSoal: data[0].soal,
           current_page,
@@ -50,15 +94,15 @@ const UjianPage = () => {
         setTerjawab({
           jawaban: res.data.jawaban,
         })
-      }else{
+      } else {
         setTerjawab({
-            jawaban:''
+          jawaban: ''
         })
         setLoading(false)
       }
     } catch (error) {
       console.error("Error fetching jawaban:", error)
-    }finally{
+    } finally {
       setLoading(false)
     }
   }, [])
@@ -67,7 +111,7 @@ const UjianPage = () => {
   const updateSoal = async (data) => {
     setLoading(true)
     setTerjawab({
-        jawaban:''
+      jawaban: ''
     })
     const newPage = data.action === 'next' ? data.current_page + 1 : data.current_page - 1
     try {
@@ -80,6 +124,24 @@ const UjianPage = () => {
         localStorage.setItem("current_page", current_page)
 
         fetchJawaban(data[0].soal.id)
+
+        const cacheData = {
+          data: {
+            dataSoal: data[0].soal,
+            current_page,
+            next_link: next_page_url,
+            prev_link: prev_page_url,
+            total,
+          },
+          timestamp: Date.now(), // Simpan timestamp untuk cache expiration
+        }
+
+        // Simpan data ke cache
+        if ('caches' in window) {
+          const cache = await caches.open(CACHE_NAME)
+          await cache.put(CACHE_KEY, new Response(JSON.stringify(cacheData)))
+        }
+
         setDatas({
           dataSoal: data[0].soal,
           current_page,
@@ -87,42 +149,41 @@ const UjianPage = () => {
           prev_link: prev_page_url,
           total,
         })
-
       }
     } catch (error) {
       console.error("Error updating soal:", error)
     } finally {
-    //   setLoading(false)
+      setLoading(false)
     }
   }
 
   const handleKeyDown = (e) => {
-    if(e.key == "ArrowRight"){
+    if (e.key === "ArrowRight") {
       updateSoal({
         action: 'next',
         current_page: parseInt(localStorage.getItem('current_page')),
       })
-    }
-    else if(e.key == "ArrowLeft"){
+    } else if (e.key === "ArrowLeft") {
       updateSoal({
         action: 'prev',
         current_page: parseInt(localStorage.getItem('current_page')),
       })
     }
   }
+
   // Memanggil API untuk soal pertama dan jawaban saat komponen pertama kali dimuat
   useEffect(() => {
     let kesempatan = 2
     const handleCurang = () => {
-        kesempatan--
-        // if(kesempatan == 1){
-        //     toast('1x lagi melakukan kecurangan, ujian otomatis selesai', {
-        //         icon: '🧐',
-        //     });
-        //   }else if(kesempatan <= 0){
-        //     toast.success('Anda melakukan kecurangan, Ujian telah selesai, Terimakasih');
-        //     redirect("/pages/auth/login")
-        // }
+      kesempatan--
+      // if(kesempatan == 1){
+      //     toast('1x lagi melakukan kecurangan, ujian otomatis selesai', {
+      //         icon: '🧐',
+      //     });
+      //   }else if(kesempatan <= 0){
+      //     toast.success('Anda melakukan kecurangan, Ujian telah selesai, Terimakasih');
+      //     redirect("/pages/auth/login")
+      // }
     }
 
     window.addEventListener('blur', handleCurang)
@@ -135,14 +196,10 @@ const UjianPage = () => {
 
     getSoal()
 
-    console.log(terjawab)
-
-
     return () => {
-      window.removeEventListener('blur', handleCurang);
+      window.removeEventListener('blur', handleCurang)
       toast.dismiss()
-    };
-    
+    }
   }, [])
 
   return (

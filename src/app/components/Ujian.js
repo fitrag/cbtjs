@@ -5,6 +5,12 @@ import LoadingUjian from "./LoadingUjian";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
+const CACHE_NAMES = [
+  'ujian-cache',
+  'ujian-soal-cache',
+  'ujian-detail-cache',
+];
+
 const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
 
   const router = useRouter();
@@ -73,11 +79,28 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
         toast.error('Upss ada yang tidak beres', {
             id: toastLoading,
         });
-    }finally{
     }
   }, [updateTerjawab]);
 
-  
+  // Fungsi untuk menghapus cache dengan nama-nama tertentu
+  const hapusCache = async () => {
+    if ('caches' in window) {
+      try {
+        // Loop untuk menghapus setiap cache dengan nama yang ada dalam CACHE_NAMES
+        for (let cacheName of CACHE_NAMES) {
+          const cache = await caches.open(cacheName);
+          await cache.keys().then(keys => {
+            keys.forEach(key => {
+              cache.delete(key);
+            });
+          });
+          console.log(`Cache ${cacheName} berhasil dihapus`);
+        }
+      } catch (error) {
+        console.error('Gagal menghapus cache:', error);
+      }
+    }
+  };
 
   // Mengelola timer dan progress
   useEffect(() => {
@@ -90,6 +113,9 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
       localStorage.removeItem("total_waktu")
       localStorage.removeItem("waktu_ujian")
       localStorage.removeItem("soal_id")
+      
+      // Menghapus cache setelah waktu habis
+      hapusCache();
     };
 
     const interval = setInterval(() => {
@@ -109,7 +135,6 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
 
     return () => clearInterval(interval);
   }, [timeLeft]);
-
 
   return (
     <div>
