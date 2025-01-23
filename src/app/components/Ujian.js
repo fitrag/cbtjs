@@ -18,6 +18,8 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
   const totalTime = parseInt(localStorage.getItem("waktu_ujian"));
   const [timeLeft, setTimeLeft] = useState(totalTime);
   const [progress, setProgress] = useState(100);
+  const [answeredQuestions, setAnsweredQuestions] = useState(new Set());
+  const [isModalOpen, setIsModalOpen] = useState(false);  // State untuk modal
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -68,6 +70,7 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
         const res = await getJawaban.json();
         if (res) {
             updateTerjawab({ jawaban: res.data.jawaban });
+            setAnsweredQuestions(new Set([...answeredQuestions, res.data.soal_id]));
         }
         if(insert){
             toast.success('Jawaban disimpan', {
@@ -80,13 +83,12 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
             id: toastLoading,
         });
     }
-  }, [updateTerjawab]);
+  }, [updateTerjawab, answeredQuestions]);
 
   // Fungsi untuk menghapus cache dengan nama-nama tertentu
   const hapusCache = async () => {
     if ('caches' in window) {
       try {
-        // Loop untuk menghapus setiap cache dengan nama yang ada dalam CACHE_NAMES
         for (let cacheName of CACHE_NAMES) {
           const cache = await caches.open(cacheName);
           await cache.keys().then(keys => {
@@ -104,7 +106,6 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
 
   // Mengelola timer dan progress
   useEffect(() => {
-    
     if (localStorage.getItem("waktu_ujian") == 'NaN' || timeLeft <= 0){
       toast.success('Waktu habis ujian telah selesai, Terimakasih telah mengerjakan');
       router.push("/pages/home")
@@ -129,18 +130,28 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
       });
     }, 1000);
 
-    // Update progress setiap detik
     const progressPercentage = (timeLeft / localStorage.getItem("total_waktu")) * 100;
     setProgress(progressPercentage);
 
     return () => clearInterval(interval);
   }, [timeLeft]);
 
+  // Fungsi untuk melompat ke soal tertentu
+  const handleGoToQuestion = (soalNumber) => {
+    updateSoal({ action: 'goTo', current_page: soalNumber });
+    setIsModalOpen(false);  // Tutup modal setelah memilih soal
+  };
+
+  // Fungsi untuk membuka/menutup modal
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
   return (
     <div>
       <section className="bg-gradient-to-b from-sky-400 to-sky-600 text-white px-5 pt-4 pb-9 rounded-br-[50px] rounded-bl-[50px] h-[50vh]">
         <header className="flex justify-between items-center mb-1">
-          <div className="font-semibold text-lg bg-blue-300 p-2 rounded-lg">
+          <div className="font-semibold text-lg bg-blue-300 p-2 rounded-lg cursor-pointer" onClick={toggleModal}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.0} stroke="currentColor" className="size-7">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>                    
@@ -169,33 +180,11 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
       </section>
 
       <section className="relative top-[-30vh] mx-5">
-
-      <div className="flex mb-2">
-        <div className="flex-1">
-          {soals.prev_link && (
-              <div className="bg-blue-300 p-2 cursor-pointer mx-1 mb-2 text-white rounded-lg inline-block float-start" onClick={() => gantiSoal('prev')}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                </svg>
-            </div>
-          )}
-          </div>
-        <div className="flex-1">
-          {soals.next_link && (
-            <div className="bg-blue-300 p-2 cursor-pointer mx-1 mb-2 text-white rounded-lg inline-block float-end" onClick={() => gantiSoal('next')}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                </svg>
-            </div>
-          )}
-          </div>
-        </div>
-
         { loading ? <LoadingUjian/> :
           <div className="bg-white shadow-md rounded-[25px]" key={soals.dataSoal.id}>
             <div className="px-4 py-5 font-light" dangerouslySetInnerHTML={{ __html: soals.dataSoal.soal }} />
             <div className="px-4 pb-4">
-              {['A', 'B', 'C', 'D'].map((opsi) => (
+              {['A', 'B', 'C', 'D','E'].map((opsi) => (
                 <div
                   key={opsi}
                   onClick={() => terjawab.jawaban != opsi ? pilihJawaban(soals.dataSoal.id, opsi, parseInt(localStorage.getItem('user_id'))) : ''}
@@ -220,6 +209,29 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
           )}
         </div>
       </section>
+
+      {/* Modal Navigasi Soal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg m-auto w-[1000px] mx-2">
+            <h3 className="text-xl mb-4 text-center">Navigasi Soal</h3>
+            <div className="flex flex-wrap justify-center">
+              {Array.from({ length: soals.total }, (_, i) => (
+                <button
+                  key={i}
+                  className={`p-2 mx-1 rounded-full ${answeredQuestions.has(i + 1) ? 'bg-green-500' : 'bg-gray-300'}`}
+                  onClick={() => handleGoToQuestion(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <button onClick={toggleModal} className="bg-red-500 text-white py-2 px-4 rounded-full">Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
