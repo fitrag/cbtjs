@@ -9,6 +9,7 @@ const CACHE_NAMES = [
   'ujian-cache',
   'ujian-soal-cache',
   'ujian-detail-cache',
+  'ujian-sudah-cache',
 ];
 
 const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
@@ -18,7 +19,9 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
   const totalTime = parseInt(localStorage.getItem("waktu_ujian"));
   const [timeLeft, setTimeLeft] = useState(totalTime);
   const [progress, setProgress] = useState(100);
-  const [answeredQuestions, setAnsweredQuestions] = useState(new Set());
+  const [answeredQuestions, setAnsweredQuestions] = useState(
+    new Set(JSON.parse(localStorage.getItem("answeredQuestions")) || [])
+  ); // Mengambil answeredQuestions dari localStorage jika ada
   const [isModalOpen, setIsModalOpen] = useState(false);  // State untuk modal
 
   const formatTime = (seconds) => {
@@ -52,15 +55,6 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
             })
         });
 
-        const resInsert = await insert.json();
-        if(resInsert){
-          if(resInsert.data.status == 'Benar'){
-            localStorage['skor'] = parseInt(localStorage['skor'])+resInsert.data.skor
-          }else{
-            localStorage['skor'] = parseInt(localStorage['skor']) <= 0 ? 0 : parseInt(localStorage['skor'])-resInsert.data.skor
-          }
-        }
-
         const getJawaban = await fetch(`http://127.0.0.1:8000/api/jawaban/${localStorage.getItem("soal_id")}/${localStorage.getItem("user_id")}`, {
             headers: {
             'Content-Type': 'application/json'
@@ -70,7 +64,9 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
         const res = await getJawaban.json();
         if (res) {
             updateTerjawab({ jawaban: res.data.jawaban });
-            setAnsweredQuestions(new Set([...answeredQuestions, res.data.soal_id]));
+            const updatedAnsweredQuestions = new Set([...answeredQuestions, res.data.soal_id]);
+            setAnsweredQuestions(updatedAnsweredQuestions);
+            localStorage.setItem("answeredQuestions", JSON.stringify(Array.from(updatedAnsweredQuestions))); // Simpan ke localStorage
         }
         if(insert){
             toast.success('Jawaban disimpan', {
@@ -108,15 +104,7 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
   useEffect(() => {
     if (localStorage.getItem("waktu_ujian") == 'NaN' || timeLeft <= 0){
       toast.success('Waktu habis ujian telah selesai, Terimakasih telah mengerjakan');
-      router.push("/pages/home")
-      localStorage.removeItem("ujian_id")
-      localStorage.removeItem("current_page")
-      localStorage.removeItem("total_waktu")
-      localStorage.removeItem("waktu_ujian")
-      localStorage.removeItem("soal_id")
-      
-      // Menghapus cache setelah waktu habis
-      hapusCache();
+      selesaiUjian();
     };
 
     const interval = setInterval(() => {
@@ -146,6 +134,56 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
+
+// Fungsi untuk menyelesaikan ujian dan mengirimkan data ke API
+const selesaiUjian = async () => {
+  try {
+    // Mengirimkan data ujian_id dan user_id ke API
+    const user_id = parseInt(localStorage.getItem('user_id'));
+    const ujian_id = parseInt(localStorage.getItem('ujian_id'));
+
+    const toastLoading = toast.loading('Mengirimkan data...');
+    
+    const response = await fetch("http://127.0.0.1:8000/api/ujian/selesai", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ujian_id,
+        user_id,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.statusCode === 200) {
+      toast.success('Ujian selesai! Terimakasih telah mengerjakan.', {
+        id: toastLoading,
+      });
+      // Arahkan ke halaman home
+      router.push("/pages/hasil");
+      
+      // Menghapus semua data ujian di localStorage
+      // localStorage.removeItem("ujian_id");
+      localStorage.removeItem("current_page");
+      localStorage.removeItem("total_waktu");
+      localStorage.removeItem("waktu_ujian");
+      localStorage.removeItem("soal_id");
+      localStorage.removeItem("answeredQuestions");
+      // Menghapus cache
+      hapusCache();
+    } else {
+      toast.error('Gagal mengirimkan data ujian.', {
+        id: toastLoading,
+      });
+    }
+  } catch (error) {
+    console.error('Error completing exam:', error);
+    toast.error('Terjadi kesalahan saat mengirim data.', {
+      id: toastLoading,
+    });
+  }
+};
 
   return (
     <div>
@@ -207,27 +245,36 @@ const Ujian = ({ soals, updateSoal, loading, terjawab, updateTerjawab }) => {
               Selanjutnya
             </div>
           )}
+          {/* Tombol Selesai Ujian */}
+          {soals.current_page === soals.total && (
+            <div
+              className="bg-blue-500 p-5 flex-1 cursor-pointer mx-1 mb-2 text-white text-center font-normal text-xl rounded-2xl border-b-[5px] border-blue-600"
+              onClick={selesaiUjian}
+            >
+              Selesai Ujian
+            </div>
+          )}
         </div>
       </section>
 
       {/* Modal Navigasi Soal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg m-auto w-[1000px] mx-2">
-            <h3 className="text-xl mb-4 text-center">Navigasi Soal</h3>
-            <div className="flex flex-wrap justify-center">
+          <div className="bg-white rounded-lg shadow-lg m-auto w-[1000px] mx-4 relative">
+            <h3 className="text-xl mb-4 text-center border-b p-4">Navigasi Soal</h3>
+            <div className="mt-4 text-center absolute top-[-30px] right-[-15px]">
+              <button onClick={toggleModal} className="bg-red-500 text-white py-2 px-4 rounded-full">&times;</button>
+            </div>
+            <div className="flex p-6 flex-wrap justify-center">
               {Array.from({ length: soals.total }, (_, i) => (
                 <button
                   key={i}
-                  className={`p-2 mx-1 rounded-full ${answeredQuestions.has(i + 1) ? 'bg-green-500' : 'bg-gray-300'}`}
-                  onClick={() => handleGoToQuestion(i + 1)}
+                  className={`py-4 px-6 mx-1 my-1 rounded-lg ${answeredQuestions.has(i + 1) ? 'bg-green-500' : 'bg-gray-300'}`}
+                  onClick={() => handleGoToQuestion(i + 1 + 1)}
                 >
                   {i + 1}
                 </button>
               ))}
-            </div>
-            <div className="mt-4 text-center">
-              <button onClick={toggleModal} className="bg-red-500 text-white py-2 px-4 rounded-full">Tutup</button>
             </div>
           </div>
         </div>

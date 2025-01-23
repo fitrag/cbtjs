@@ -37,6 +37,7 @@ const Detail = () => {
         setUjian(data)
         setLoading(false)
     }
+    
 
     const handleToken = async (e) => {
         e.preventDefault()
@@ -142,14 +143,21 @@ const Detail = () => {
                             <div className="flex-1">
                                 <h3 className="font-bold text-lg text-gray-800">{ujian.nama}</h3>
                                 <h3 className="text-gray-500 text-xs">Fadila Fitra Kusuma Jaya</h3>
-                                <h3 className="text-gray-500 text-sm mt-2">{ujian.soals?.length} Soal - {ujian.waktu / 60} menit</h3>
+                                <h3 className="text-gray-500 text-sm mt-2">{ujian.soals_count} Soal - {ujian.waktu / 60} menit</h3>
                             </div>
                         </div>
                         <div className="mt-2 flex-wrap bg-white p-4 shadow rounded-lg">
+                            {
+                            ujian.kelas?.id == localStorage.getItem('kelas_id') ? 
                             <form onSubmit={handleToken}>
                                 <input className="w-full border rounded-lg p-3 outline-none" value={token} onChange={(e) => { setToken(e.target.value) }} placeholder="Token Ujian" />
                                 <button type="submit" className="w-full bg-blue-500 p-3 rounded-lg mt-2 text-white">Mulai</button>
                             </form>
+                            :
+                            <>
+                                Anda tidak memiliki akses ke ujian ini
+                            </>
+                            }
                         </div>
                     </div>
             }

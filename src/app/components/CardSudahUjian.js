@@ -1,29 +1,11 @@
 'use client'
 import { useRouter } from "next/navigation"
 
-const CardUjian = ({ujians, loading}) => {
+const CardSudahUjian = ({ujians, loading}) => {
     
     const router = useRouter();
 
-    // Fungsi untuk menghapus cache terkait ujian detail
-    const hapusCacheDetail = () => {
-        if ('caches' in window) {
-            caches.delete('ujian-detail-cache').then((deleted) => {
-                if (deleted) {
-                    console.log('Cache ujian-detail-cache berhasil dihapus');
-                }
-            });
-
-            caches.delete('ujian-detail-data').then((deleted) => {
-                if (deleted) {
-                    console.log('Cache ujian-detail-data berhasil dihapus');
-                }
-            });
-        }
-    }
-
     const selectedUjian = (id) => {
-        hapusCacheDetail()
         router.push(`/pages/ujian/${id}`)
     }
 
@@ -77,26 +59,29 @@ const CardUjian = ({ujians, loading}) => {
             ujians.length > 0 ?
             ujians.map((ujian, index) => (
                 <div className="flex flex-col mt-1 mx-5" key={index}>
-                    <div className="flex shadow space-x-4 items-center bg-white rounded-lg p-5 my-2">
+                    <div className="flex shadow space-x-4 text-white items-center bg-green-400 rounded-lg p-5 my-2">
                         <div className="w-[100px]">
-                            <div className="bg-blue-200 p-3 rounded-lg h-[100px] flex items-center justify-center font-bold text-lg text-white text-3xl">{ujian.kelas.nama}</div>
+                            <div className="bg-green-500 p-3 rounded-lg h-[100px] flex items-center justify-center font-bold text-lg text-white text-3xl">{ujian.kelas.nama}</div>
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-bold text-lg text-gray-800">{ujian.nama}</h3>
-                            <h3 className="text-gray-500 text-xs">Fadila Fitra Kusuma Jaya</h3>
-                            <h3 className="text-gray-500 text-sm mt-2">{ujian.soals_count} Soal - {ujian.waktu/60} menit</h3>
-                            <div className="flex-1 bg-blue-500 text-center text-white p-2 rounded-lg mt-4 text-sm cursor-pointer" onClick={() => {
-                                selectedUjian(ujian.id)
-                            }}>Mulai ujian</div>
+                            <h3 className="font-bold text-lg">{ujian.nama}</h3>
+                            <h3 className="text-xs">Fadila Fitra Kusuma Jaya</h3>
+                            <h3 className="text-sm mt-2">{ujian.soals_count} Soal - {ujian.waktu/60} menit</h3>
+                            <div className="flex-1 bg-green-500 text-center text-white p-2 rounded-lg mt-4 text-sm cursor-pointer">Sudah Ujian</div>
                         </div>
                     </div>
                 </div>
             ))
-         : <div className="bg-gray-100 flex h-screen items-center justify-center">Belum ada ujian</div>
+         : <div className="bg-gray-100 flex mt-[20vh] items-center justify-center flex-col">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-[150px] text-slate-300 mb-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m6 4.125 2.25 2.25m0 0 2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+            </svg>
+            <h3>Belum ada ujian selesai</h3>
+         </div>
          }
          </div>
         </>
     )
 }
 
-export default CardUjian
+export default CardSudahUjian

@@ -8,6 +8,7 @@ const CACHE_NAMES = [
   'ujian-cache',
   'ujian-soal-cache',
   'ujian-detail-cache',
+  'ujian-sudah-cache',
 ];
 
 const Header = () => {
@@ -26,10 +27,10 @@ const Header = () => {
         }
       })
       const res = await getUser.json()
+      localStorage.setItem('kelas_id', res.kelas_id)
 
       // Simpan data user ke localStorage
       localStorage.setItem('user', JSON.stringify(res))
-
       // Set state user dan loading
       setLoading(false)
       setUser(res)

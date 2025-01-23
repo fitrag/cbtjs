@@ -1,14 +1,15 @@
 'use client'
 
-import CardUjian from "@/app/components/CardUjian"
+
 import Header from "@/app/components/Header"
 import { useEffect, useState } from "react"
+import CardSudahUjian from "@/app/components/CardSudahUjian"
 
-const CACHE_NAME = 'ujian-cache'
-const CACHE_KEY = 'ujian-data'
+const CACHE_NAME = 'ujian-sudah-cache'
+const CACHE_KEY = 'ujian-sudah-data'
 const CACHE_EXPIRATION_TIME = 2 * 60 * 1000 // 2 menit dalam milidetik
 
-const Home = () => {
+const Ujian = () => {
     const [ujians, setUjians] = useState([])
     const [loading, setLoading] = useState(true)
     const [user, setUser]   = useState(null)
@@ -19,7 +20,7 @@ const Home = () => {
         setUser(JSON.parse(savedUser))
 
         try {
-            const get = await fetch(`http://127.0.0.1:8000/api/ujian/belum/user/${localStorage.getItem('user_id')}`)
+            const get = await fetch(`http://127.0.0.1:8000/api/ujian/sudah/user/${localStorage.getItem('user_id')}`)
             const res = await get.json()
 
             // Menyimpan data ke dalam cache bersama dengan timestamp
@@ -83,9 +84,9 @@ const Home = () => {
     return (
         <>
             <Header />
-            <CardUjian ujians={ujians} loading={loading} />
+            <CardSudahUjian ujians={ujians} loading={loading} />
         </>
     )
 }
 
-export default Home
+export default Ujian
