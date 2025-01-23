@@ -46,36 +46,45 @@ const UjianPage = () => {
 
       if (res) {
         const { data, current_page, next_page_url, prev_page_url, total } = res.data
-        localStorage.setItem("soal_id", data[0].soal.id)
-        localStorage.setItem("current_page", current_page)
-        fetchJawaban(data[0].soal.id)
 
-        const cacheData = {
-          data: {
+        if(res.data.data == null){
+          console.log("Data soal kosong")	
+        }else{
+          localStorage.setItem("soal_id", data[0].soal.id)
+          localStorage.setItem("current_page", current_page)
+          fetchJawaban(data[0].soal.id)
+  
+          
+  
+          const cacheData = {
+            data: {
+              dataSoal: data[0].soal,
+              current_page,
+              next_link: next_page_url,
+              prev_link: prev_page_url,
+              total,
+            },
+            timestamp: Date.now(), // Simpan timestamp untuk cache expiration
+          }
+  
+          // Simpan data ke cache
+          if ('caches' in window) {
+            const cache = await caches.open(CACHE_NAME)
+            await cache.put(CACHE_KEY, new Response(JSON.stringify(cacheData)))
+          }
+  
+          setDatas({
             dataSoal: data[0].soal,
             current_page,
             next_link: next_page_url,
             prev_link: prev_page_url,
             total,
-          },
-          timestamp: Date.now(), // Simpan timestamp untuk cache expiration
+          })
         }
-
-        // Simpan data ke cache
-        if ('caches' in window) {
-          const cache = await caches.open(CACHE_NAME)
-          await cache.put(CACHE_KEY, new Response(JSON.stringify(cacheData)))
-        }
-
-        setDatas({
-          dataSoal: data[0].soal,
-          current_page,
-          next_link: next_page_url,
-          prev_link: prev_page_url,
-          total,
-        })
       }
     } catch (error) {
+      toast.error('Terjadi kesalahan saat mengambil data soal')
+      redirect("/pages/home")
       console.error("Error fetching soal:", error)
     } finally {
     }
